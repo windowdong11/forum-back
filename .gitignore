@@ -1,0 +1,8 @@
+# dependencies
+/node_modules
+
+# build destination directory
+/dist
+
+# uploaded files
+/src/uploads
