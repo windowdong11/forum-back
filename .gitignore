@@ -1,3 +1,8 @@
+nohup.out
+
+# secrets
+whitelist.json
+
 # dependencies
 /node_modules
 

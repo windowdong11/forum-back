@@ -9,12 +9,13 @@ import Post from './models/Post';
 import { Get_PostList_Res } from './response/Get_PostList';
 import { BaseJson_Res } from './response/Base_Res';
 import Get_Post_Res from './response/Get_Post';
+import whitelist from './whitelist.json'
 
 const app = express();
 const port = 5500
 
-const corsOptions = {
-  origin: 'http://localhost:3000'
+const corsOptions : cors.CorsOptions = {
+  origin: whitelist
 }
 
 app.use(cors(corsOptions))
