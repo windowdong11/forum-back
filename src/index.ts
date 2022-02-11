@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 app.use('/uploads', express.static('src/uploads'))
 
-// const upload = multer({dest: 'uploads/'})
+
 const upload = multer({
   storage
 })
@@ -71,7 +71,6 @@ app.get('/post/:postid', async (req, res) => {
           post
         } as BaseJson_Res & Get_Post_Res)
     })
-
   } catch (error) {
     res.status(200).send({
       success: false,
@@ -114,7 +113,7 @@ app.post('/', upload.array('images', 3), async (req : Request<{}, {}, CreatePost
   console.log('Post post')
 
   const board_id = new ObjectId()
-  collections.board.insertOne({
+  const newPost = {
     author: req.body.author,
     password: req.body.password,
     title: req.body.title,
@@ -123,7 +122,8 @@ app.post('/', upload.array('images', 3), async (req : Request<{}, {}, CreatePost
     created_date: new Date(),
     updated_date: new Date(),
     _id : board_id
-  })
+  }
+  collections.board.insertOne(newPost)
   if(req.files?.length)
     collections.file.insertMany(
       (req.files as Express.Multer.File[]).map(file => {
@@ -134,7 +134,10 @@ app.post('/', upload.array('images', 3), async (req : Request<{}, {}, CreatePost
         }
       })
     )
-  return res.status(200).send()
+  return res.status(200).send({
+    success: true,
+    post: newPost
+  } as BaseJson_Res & Get_Post_Res)
 })
 
 connectToDatabase().then(() =>{
