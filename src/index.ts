@@ -37,10 +37,10 @@ const upload = multer({
 
 
 app.get('/', async (req, res) => {
-  if (!collections.board)
-    throw new Error('Collection "Board" does not match.')
+  if (!collections.post)
+    throw new Error('Collection "Post" does not match.')
   console.log('Get post list')
-  const posts = await collections.board.find({}).toArray()
+  const posts = await collections.post.find({}).toArray()
   res.status(200).send({
     success: true,
     posts: posts.map(post => {
@@ -54,10 +54,10 @@ app.get('/', async (req, res) => {
 
 
 app.get('/post/:postid', async (req, res) => {
-  if (!collections.board)
-    throw new Error('Collection "Board" does not match.')
+  if (!collections.post)
+    throw new Error('Collection "Post" does not match.')
   try {
-    collections.board.findOne({ _id: new ObjectId(req.params.postid) })
+    collections.post.findOne({ _id: new ObjectId(req.params.postid) })
       .then(post => {
         if (post)
           res.status(200).send({
@@ -105,7 +105,7 @@ interface CreatePost_Data {
 
 app.post('/', upload.array('images', 3), async (req: Request<{}, {}, CreatePost_Data>, res) => {
   // console.log('params => ', req.params)
-  if (!collections.board)
+  if (!collections.post)
     throw new Error('Collection "Board" does not match.')
   if (!collections.comment)
     throw new Error('Collection "Comment" does not match.')
@@ -120,7 +120,7 @@ app.post('/', upload.array('images', 3), async (req: Request<{}, {}, CreatePost_
   //   throw new Error('Text content not defined.')
   console.log('Post post')
 
-  const board_id = new ObjectId()
+  const post_id = new ObjectId()
   const newPost = {
     ...req.body,
     images : (req.files ? req.files as Express.Multer.File[] : []),
@@ -128,9 +128,9 @@ app.post('/', upload.array('images', 3), async (req: Request<{}, {}, CreatePost_
     comments: [],
     created_date: new Date(),
     updated_date: new Date(),
-    _id: board_id
+    _id: post_id
   }
-  collections.board.insertOne(newPost)
+  collections.post.insertOne(newPost)
   return res.status(200).send({
     success: true,
     post: newPost
