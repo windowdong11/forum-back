@@ -10,4 +10,4 @@ whitelist.json
 /dist
 
 # uploaded files
-/src/uploads
+/uploads

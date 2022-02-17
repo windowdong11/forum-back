@@ -1,6 +1,5 @@
 import express, { Request } from 'express'
 import cors from 'cors'
-// import multiparty, { File, Part } from 'multiparty'
 import multer from 'multer'
 import { MongoClient, Collection, ObjectId } from 'mongodb';
 import assert from 'assert'
@@ -20,13 +19,14 @@ const corsOptions: cors.CorsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.use('/image', express.static(path.join(__dirname, '../uploads')))
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/')
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname)
+    cb(null, Date.now() + '-' + file.originalname)
   }
 })
 
@@ -54,6 +54,7 @@ app.get('/', async (req, res) => {
 
 
 app.get('/post/:postid', async (req, res) => {
+  console.log(`get post : ${req.params.postid}`)
   if (!collections.post)
     throw new Error('Collection "Post" does not match.')
   try {
@@ -78,23 +79,6 @@ app.get('/post/:postid', async (req, res) => {
   }
 })
 
-app.get('/image/:postid', async (req, res) => {
-  console.log('Get file')
-  try {
-    // const file = await collections.file.findOne({ board_id: new ObjectId(req.params.postid) })
-    // if (file) {
-      // console.log(path.join(__dirname, '../', file.path))
-      // res.sendFile(path.join(__dirname, '../', file.path))
-      // console.log(path.join(__dirname, '../', file.path))
-      // res.sendFile(path.join(__dirname, '../', file.path))
-    // }
-    // res.status(200).send()
-    console.log('Sended')
-  } catch (err) {
-    console.log(err)
-  }
-})
-
 interface CreatePost_Data {
   author: string
   password: string
@@ -104,21 +88,13 @@ interface CreatePost_Data {
 }
 
 app.post('/', upload.array('images', 3), async (req: Request<{}, {}, CreatePost_Data>, res) => {
-  // console.log('params => ', req.params)
   if (!collections.post)
     throw new Error('Collection "Board" does not match.')
   if (!collections.comment)
     throw new Error('Collection "Comment" does not match.')
-
-  // if(!req.body.author)
-  //   throw new Error('Author not defined.')
-  // if(!req.body.password)
-  //   throw new Error('Password not defined.')
-  // if(!req.body.title)
-  //   throw new Error('Title not defined.')
-  // if(!req.body.content)
-  //   throw new Error('Text content not defined.')
+  
   console.log('Post post')
+  console.log(req.files)
 
   const post_id = new ObjectId()
   const newPost = {
