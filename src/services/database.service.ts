@@ -4,13 +4,11 @@
 import { Collection, MongoClient } from 'mongodb';
 import Post from '../models/Post';
 import Comment from '../models/Comment';
-import File from '../models/File';
 
 // Global Variables
 export interface Collections {
     board?: Collection<Post>
     comment?: Collection<Comment>
-    file?: Collection<File>
 }
 export const collections: Collections = {}
 
@@ -27,7 +25,6 @@ export async function connectToDatabase() {
 
     collections.board = db.collection('board')
     collections.comment = db.collection('comment')
-    collections.file = db.collection('file')
 
     console.log(`Successfully connected to database: ${db.databaseName} and collection: ${Object.keys(collections).map((key) => collections[key as keyof Collections]?.collectionName)}`);
     return db;

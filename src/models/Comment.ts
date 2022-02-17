@@ -3,11 +3,14 @@ import Post from './Post';
 
 export default interface Comment {
     _id: ObjectId
-    board_id: Post['_id']
-    parent_id?: Comment['_id']
+    children?: Comment['_id'][]
 
+    author: string
+    password: string
+    images: Express.Multer.File[]
+    
     created_date: Date
     updated_date: Date
 
-    text_content: string
+    content: string
 }
