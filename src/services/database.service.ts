@@ -7,10 +7,9 @@ import Comment from '../models/Comment';
 
 // Global Variables
 export interface Collections {
-    post?: Collection<Post>
-    comment?: Collection<Comment>
+    post: Collection<Post>
+    comment: Collection<Comment>
 }
-export const collections: Collections = {}
 
 // Initialize Connection
 
@@ -23,9 +22,14 @@ export async function connectToDatabase() {
 
     const db = client.db('test')
 
-    collections.post = db.collection('post')
-    collections.comment = db.collection('comment')
+    const collections : Collections = {
+        post: db.collection('post'),
+        comment: db.collection('comment')
+    }
 
     console.log(`Successfully connected to database: ${db.databaseName} and collection: ${Object.keys(collections).map((key) => collections[key as keyof Collections]?.collectionName)}`);
-    return db;
+    return {
+        db,
+        collections
+    };
 }
