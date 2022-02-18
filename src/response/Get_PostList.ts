@@ -1,9 +1,17 @@
+import { ObjectId } from "mongodb"
 import Post from "../models/Post"
+import { BaseJson_Res } from './Base_Res';
 
-type PostItem = Pick<Post,
-'_id' | 'author' | 'title' | 'updated_date' | 'tags'
->
+const pickerThings = ['_id', 'author', 'title', 'updated_date', 'tags'] as const
 
-export interface Get_PostList_Res {
-  posts: PostItem[]
+
+type PostItemPicker = (typeof pickerThings)[number]
+type PostListItem = Pick<Post, PostItemPicker>
+
+export const PostToPostListItem = (post: Post) => {
+  return pickerThings.reduce((prev, cur) => ({...prev, [cur] : post[cur]}), {}) as PostListItem
+}
+
+export interface Get_PostList_Res extends BaseJson_Res {
+  posts: PostListItem[]
 }
