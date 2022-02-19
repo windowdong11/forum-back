@@ -38,7 +38,7 @@ connectToDatabase().then(
       storage
     })
 
-    app.get('/', async (req, res) => {
+    app.get('/post/list', async (req, res) => {
       console.log('Get post list')
       const posts = (await collections.post.find({}).toArray()).map(post => (PostToPostListItem(post)))
       res.status(200).send({
