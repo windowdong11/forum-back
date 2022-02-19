@@ -11,19 +11,20 @@ import Get_Post_Res, { PostToPostResItem } from './response/Get_Post';
 import whitelist from './whitelist.json'
 import path from 'path';
 import e from 'express';
+import Post_CreatePost_Req from './request/Post_CreatePost';
 
 connectToDatabase().then(
-  ({db, collections}) => {
+  ({ db, collections }) => {
     const app = express();
     const port = 5500
-    
+
     const corsOptions: cors.CorsOptions = {
       origin: whitelist
     }
-    
+
     app.use(cors(corsOptions))
     app.use('/image', express.static(path.join(__dirname, '../uploads')))
-    
+
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
         cb(null, 'uploads/')
@@ -32,23 +33,23 @@ connectToDatabase().then(
         cb(null, Date.now() + '-' + file.originalname)
       }
     })
-    
-    
+
+
     const upload = multer({
       storage
     })
-    
+
     app.get('/', async (req, res) => {
       console.log('Get post list')
       const posts = (await collections.post.find({}).toArray()).map(post => (PostToPostListItem(post)))
       res.status(200).send({
         success: true,
-        posts : posts
+        posts: posts
       } as Get_PostList_Res)
     })
-    
-    
-    
+
+
+
     app.get('/post/:postid', async (req, res) => {
       console.log(`get post : ${req.params.postid}`)
       try {
@@ -57,7 +58,7 @@ connectToDatabase().then(
             if (post)
               res.status(200).send({
                 success: true,
-                post : PostToPostResItem(post)
+                post: PostToPostResItem(post)
               } as Get_Post_Res)
             else
               res.send(404)
@@ -66,23 +67,15 @@ connectToDatabase().then(
         res.send(404)
       }
     })
-    
-    interface CreatePost_Data {
-      author: string
-      password: string
-      title: string
-      content: string
-      tags: string
-    }
-    
-    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, CreatePost_Data>, res) => {
+
+    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, Post_CreatePost_Req>, res) => {
       const post_id = new ObjectId()
-      
+
       console.log(`Create new post, ${post_id}`)
-    
+
       const newPost = {
         ...req.body,
-        images : (req.files ? req.files as Express.Multer.File[] : []),
+        images: (req.files ? req.files as Express.Multer.File[] : []),
         tags: (req.body.tags.length ? req.body.tags.split(' ') : []),
         comments: [],
         created_date: new Date(),
@@ -95,7 +88,7 @@ connectToDatabase().then(
         post: PostToPostResItem(newPost)
       } as Get_Post_Res)
     })
-    
+
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`)
     })
