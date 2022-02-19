@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb"
-import Post from './Post';
 
 export default interface Comment {
     _id: ObjectId
