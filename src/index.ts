@@ -26,6 +26,7 @@ connectToDatabase().then(
 
     app.use(cors(corsOptions))
     app.use('/image', express.static(path.join(__dirname, '../uploads')))
+    app.use(express.json())
 
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
@@ -106,6 +107,21 @@ connectToDatabase().then(
           res.send(PostToUpdatePostResItem(upres.value)).status(200)
         else res.sendStatus(404)
       })
+    })
+
+    app.delete('/post/delete/:postid', (req : Request<{ postid: string }, {}, {password: string}>, res) => {
+      console.log(`Delete post, ${req.params.postid}`)
+      if(!req.body || !req.body.password) {
+        res.sendStatus(400)
+        return
+      }
+      collections.post.findOneAndDelete({ _id: new ObjectId(req.params.postid), password: req.body.password})
+        .then(modres => {
+          if(modres.ok && modres.value)
+            res.sendStatus(200)
+          else
+            res.sendStatus(404)
+        })
     })
 
     app.listen(port, () => {
