@@ -12,6 +12,8 @@ import whitelist from './whitelist.json'
 import path from 'path';
 import e from 'express';
 import Post_CreatePost_Req from './request/Post_CreatePost';
+import Put_UpdatePost_Req from './request/Put_UpdatePost';
+import { PostToUpdatePostResItem } from './response/Put_UpdatePost';
 
 connectToDatabase().then(
   ({ db, collections }) => {
@@ -87,6 +89,23 @@ connectToDatabase().then(
         success: true,
         post: PostToPostResItem(newPost)
       } as Get_Post_Res)
+    })
+
+    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res) => {
+      console.log(`Update document, ${req.params.postid}`)
+      console.log(req.body)
+      collections.post.findOneAndUpdate({ _id: new ObjectId(req.params.postid), password: req.body.password }, {
+        $set: {
+          ...req.body,
+          images: (req.files ? req.files as Express.Multer.File[] : []),
+          tags: (req.body.tags.length ? req.body.tags.split(' ') : []),
+          updated_date: new Date(),
+        }
+      }).then(upres => {
+        if(upres.ok && upres.value)
+          res.send(PostToUpdatePostResItem(upres.value)).status(200)
+        else res.sendStatus(404)
+      })
     })
 
     app.listen(port, () => {
