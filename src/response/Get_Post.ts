@@ -1,7 +1,7 @@
 import Post from "../models/Post";
 import { BaseJson_Res, PostImages_to_ImagesRes } from "./Base_Res";
 
-const pickerThings = ['author', 'title', 'content', 'comments', 'tags','created_date', 'updated_date'] as const
+const pickerThings = ['_id', 'author', 'title', 'content', 'comments', 'tags','created_date', 'updated_date'] as const
 
 
 type PostResPicker = (typeof pickerThings)[number]
