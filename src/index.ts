@@ -75,7 +75,7 @@ connectToDatabase().then(
       const newPost = {
         ...req.body,
         images: (req.files ? req.files as Express.Multer.File[] : []),
-        tags: (req.body.tags.length ? req.body.tags.split(' ') : []),
+        tags: (req.body.tags.length ? req.body.tags.split(',') : []),
         comments: [],
         created_date: new Date(),
         updated_date: new Date(),
