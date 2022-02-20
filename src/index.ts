@@ -1,4 +1,4 @@
-import express, { Request } from 'express'
+import express, { Request, Response } from 'express'
 import cors from 'cors'
 import multer from 'multer'
 import { ObjectId } from 'mongodb';
@@ -9,7 +9,7 @@ import whitelist from './whitelist.json'
 import path from 'path';
 import Post_CreatePost_Req from './request/Post_CreatePost';
 import Put_UpdatePost_Req from './request/Put_UpdatePost';
-import { PostToUpdatePostResItem } from './response/Put_UpdatePost';
+import ModifyPost_Res, { Post_to_ModifyPost_Res } from './response/Post_Modify';
 
 connectToDatabase().then(
   ({ db, collections }) => {
@@ -49,7 +49,7 @@ connectToDatabase().then(
 
 
 
-    app.get('/post/:postid', async (req, res) => {
+    app.get('/post/:postid', async (req, res : Response<Get_Post_Res>) => {
       console.log(`get post : ${req.params.postid}`)
       try {
         collections.post.findOne({ _id: new ObjectId(req.params.postid) })
@@ -58,16 +58,16 @@ connectToDatabase().then(
               res.status(200).send({
                 success: true,
                 post: PostToPostResItem(post)
-              } as Get_Post_Res)
+              })
             else
-              res.send(404)
+              res.sendStatus(404)
           })
       } catch (error) {
-        res.send(404)
+        res.sendStatus(404)
       }
     })
 
-    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, Post_CreatePost_Req>, res) => {
+    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, Post_CreatePost_Req>, res : Response<Get_Post_Res>) => {
       const post_id = new ObjectId()
 
       console.log(`Create new post, ${post_id}`)
@@ -85,10 +85,10 @@ connectToDatabase().then(
       return res.send({
         success: true,
         post: PostToPostResItem(newPost)
-      } as Get_Post_Res)
+      })
     })
 
-    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res) => {
+    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res : Response<ModifyPost_Res>) => {
       console.log(`Update document, ${req.params.postid}`)
       console.log(req.body)
       collections.post.findOneAndUpdate({ _id: new ObjectId(req.params.postid), password: req.body.password }, {
@@ -100,12 +100,15 @@ connectToDatabase().then(
         }
       }).then(upres => {
         if(upres.ok && upres.value)
-          res.send(PostToUpdatePostResItem(upres.value)).status(200)
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
         else res.sendStatus(404)
       })
     })
 
-    app.delete('/post/delete/:postid', (req : Request<{ postid: string }, {}, {password: string}>, res) => {
+    app.delete('/post/delete/:postid', (req : Request<{ postid: string }, {}, {password: string}>, res : Response<ModifyPost_Res>) => {
       console.log(`Delete post, ${req.params.postid}`)
       if(!req.body || !req.body.password) {
         res.sendStatus(400)
@@ -114,7 +117,10 @@ connectToDatabase().then(
       collections.post.findOneAndDelete({ _id: new ObjectId(req.params.postid), password: req.body.password})
         .then(modres => {
           if(modres.ok && modres.value)
-            res.sendStatus(200)
+            res.send({
+              success: true,
+              post: Post_to_ModifyPost_Res(modres.value)
+            }).status(200)
           else
             res.sendStatus(404)
         })
