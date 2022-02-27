@@ -10,6 +10,8 @@ import path from 'path';
 import Post_CreatePost_Req from './request/Post_CreatePost';
 import Put_UpdatePost_Req from './request/Put_UpdatePost';
 import ModifyPost_Res, { Post_to_ModifyPost_Res } from './response/Post_Modify';
+import Post_CreateComment_Req from './request/Post_CreateComment';
+import Comment from './models/Comment';
 
 connectToDatabase().then(
   ({ db, collections }) => {
@@ -49,7 +51,7 @@ connectToDatabase().then(
 
 
 
-    app.get('/post/:postid', async (req, res : Response<Get_Post_Res>) => {
+    app.get('/post/:postid', async (req, res: Response<Get_Post_Res>) => {
       console.log(`get post : ${req.params.postid}`)
       try {
         collections.post.findOne({ _id: new ObjectId(req.params.postid) })
@@ -67,7 +69,7 @@ connectToDatabase().then(
       }
     })
 
-    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, Post_CreatePost_Req>, res : Response<Get_Post_Res>) => {
+    app.post('/post/create', upload.array('images', 3), async (req: Request<{}, {}, Post_CreatePost_Req>, res: Response<Get_Post_Res>) => {
       const post_id = new ObjectId()
 
       console.log(`Create new post, ${post_id}`)
@@ -88,7 +90,7 @@ connectToDatabase().then(
       })
     })
 
-    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res : Response<ModifyPost_Res>) => {
+    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res: Response<ModifyPost_Res>) => {
       console.log(`Update document, ${req.params.postid}`)
       console.log(req.body)
       collections.post.findOneAndUpdate({ _id: new ObjectId(req.params.postid), password: req.body.password }, {
@@ -99,7 +101,7 @@ connectToDatabase().then(
           updated_date: new Date(),
         }
       }).then(upres => {
-        if(upres.ok && upres.value)
+        if (upres.ok && upres.value)
           res.send({
             success: true,
             post: Post_to_ModifyPost_Res(upres.value)
@@ -108,15 +110,15 @@ connectToDatabase().then(
       })
     })
 
-    app.delete('/post/delete/:postid', (req : Request<{ postid: string }, {}, {password: string}>, res : Response<ModifyPost_Res>) => {
+    app.delete('/post/delete/:postid', (req: Request<{ postid: string }, {}, { password: string }>, res: Response<ModifyPost_Res>) => {
       console.log(`Delete post, ${req.params.postid}`)
-      if(!req.body || !req.body.password) {
+      if (!req.body || !req.body.password) {
         res.sendStatus(400)
         return
       }
-      collections.post.findOneAndDelete({ _id: new ObjectId(req.params.postid), password: req.body.password})
+      collections.post.findOneAndDelete({ _id: new ObjectId(req.params.postid), password: req.body.password })
         .then(modres => {
-          if(modres.ok && modres.value)
+          if (modres.ok && modres.value)
             res.send({
               success: true,
               post: Post_to_ModifyPost_Res(modres.value)
@@ -126,6 +128,76 @@ connectToDatabase().then(
         })
     })
 
+    //* ------------ Comments ------------
+
+    // * Create comment
+    app.post('/post/:postid/comment/create', upload.array('images', 3), (req: Request<{ postid: string }, {}, Post_CreateComment_Req>, res: Response<ModifyPost_Res>) => {
+      console.log(`Create comment, ${req.params.postid}`)
+      const newComnent: Comment = {
+        ...req.body,
+        _id: new ObjectId(),
+        children: [],
+        created_date: new Date(),
+        updated_date: new Date(),
+        images: (req.files ? req.files as Express.Multer.File[] : []),
+      }
+      collections.post.findOneAndUpdate(
+        { _id: new ObjectId(req.params.postid) },
+        {
+          $push: {
+            comments: newComnent
+          },
+        },
+        {
+          returnDocument: 'after', // return the updated document
+        }).then(upres => {
+          if (upres.ok && upres.value) {
+            res.send({
+              success: true,
+              post: Post_to_ModifyPost_Res(upres.value)
+            }).status(200)
+          }
+          else {
+            res.sendStatus(404)
+          }
+        })
+    })
+
+    // * Create child comment
+    app.post('/post/:postid/comment/create/:commentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string }, {}, Post_CreateComment_Req>, res: Response<ModifyPost_Res>) => {
+      console.log(`Create comment, ${req.params.postid} > ${req.params.commentid}`)
+      const newComnent: Comment = {
+        ...req.body,
+        _id: new ObjectId(),
+        children: [],
+        created_date: new Date(),
+        updated_date: new Date(),
+        images: (req.files ? req.files as Express.Multer.File[] : []),
+      }
+      collections.post.findOneAndUpdate(
+        { _id: new ObjectId(req.params.postid) },
+        {
+          $push: {
+            // find comment by id, insert new comment to children
+            'comments.$[parentPost].children': newComnent
+          }
+        },
+        {
+          returnDocument: 'after',
+          arrayFilters: [{ 'parentPost._id': new ObjectId(req.params.commentid) }]
+        }
+      ).then(upres => {
+        if (upres.ok && upres.value) {
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
+        }
+        else {
+          res.sendStatus(404)
+        }
+      })
+    })
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`)
     })

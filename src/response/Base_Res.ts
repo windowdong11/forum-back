@@ -1,3 +1,3 @@
 export interface BaseJson_Res {success: boolean}
 
-export const PostImages_to_ImagesRes = (images: Express.Multer.File[]) => images.map(image => '/image/' + image.filename)
+export const FileImage_to_ImageSource = (images: Express.Multer.File[]) => images.map(image => '/image/' + image.filename)

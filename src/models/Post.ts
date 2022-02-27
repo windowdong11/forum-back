@@ -3,7 +3,7 @@ import Comment from './Comment';
 
 export default interface Post {
     _id: ObjectId
-    comments: Comment['_id'][]
+    comments: Comment[]
 
     created_date: Date
     updated_date: Date
