@@ -91,7 +91,7 @@ connectToDatabase().then(
       })
     })
 
-    app.put('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res: Response<ModifyPost_Res>) => {
+    app.patch('/post/edit/:postid', upload.array('images', 3), (req: Request<{ postid: string }, {}, Put_UpdatePost_Req>, res: Response<ModifyPost_Res>) => {
       console.log(`Update document, ${req.params.postid}`)
       console.log(req.body)
       collections.post.findOneAndUpdate({ _id: new ObjectId(req.params.postid), password: req.body.password }, {
@@ -203,7 +203,7 @@ connectToDatabase().then(
     })
 
     // * Edit comment
-    app.post('/post/:postid/comment/edit/:commentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
+    app.patch('/post/:postid/comment/edit/:commentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
       console.log(`Edit comment, ${req.params.postid} > ${req.params.commentid}`)
       if (!req.body || !req.body.password) {
         res.sendStatus(400)
@@ -242,7 +242,7 @@ connectToDatabase().then(
     })
 
     //* Edit childcomment
-    app.post('/post/:postid/comment/edit/:commentid/:childcommentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string, childcommentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
+    app.patch('/post/:postid/comment/edit/:commentid/:childcommentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string, childcommentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
       console.log(`Edit child comment, ${req.params.postid} > ${req.params.commentid} > ${req.params.childcommentid}`)
       if (!req.body || !req.body.password) {
         res.sendStatus(400)
