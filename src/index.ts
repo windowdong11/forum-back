@@ -12,6 +12,7 @@ import Put_UpdatePost_Req from './request/Put_UpdatePost';
 import ModifyPost_Res, { Post_to_ModifyPost_Res } from './response/Post_Modify';
 import Post_CreateComment_Req from './request/Post_CreateComment';
 import Comment from './models/Comment';
+import Post_EditComment_Req from './request/Post_EditComment';
 
 connectToDatabase().then(
   ({ db, collections }) => {
@@ -140,6 +141,7 @@ connectToDatabase().then(
         created_date: new Date(),
         updated_date: new Date(),
         images: (req.files ? req.files as Express.Multer.File[] : []),
+        deleted: false
       }
       collections.post.findOneAndUpdate(
         { _id: new ObjectId(req.params.postid) },
@@ -173,6 +175,7 @@ connectToDatabase().then(
         created_date: new Date(),
         updated_date: new Date(),
         images: (req.files ? req.files as Express.Multer.File[] : []),
+        deleted: false,
       }
       collections.post.findOneAndUpdate(
         { _id: new ObjectId(req.params.postid) },
@@ -198,6 +201,186 @@ connectToDatabase().then(
         }
       })
     })
+
+    // * Edit comment
+    app.post('/post/:postid/comment/edit/:commentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
+      console.log(`Edit comment, ${req.params.postid} > ${req.params.commentid}`)
+      if (!req.body || !req.body.password) {
+        res.sendStatus(400)
+        return
+      }
+      const commentID = new ObjectId(req.params.commentid)
+      collections.post.findOneAndUpdate(
+        {
+          _id: new ObjectId(req.params.postid),
+          comments: {
+            $elemMatch: {
+              _id: commentID,
+              password: req.body.password,
+              deleted: false,
+            }
+          }
+        },
+        {
+          $set: {
+            "comments.$[comment].content" : req.body.content,
+            "comments.$[comment].images" : (req.files ? req.files as Express.Multer.File[] : []),
+          }
+        },
+        { returnDocument: 'after', arrayFilters: [{ 'comment._id': commentID }] }
+      ).then(upres => {
+        if (upres.ok && upres.value) {
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
+        }
+        else {
+          res.sendStatus(404)
+        }
+      })
+    })
+
+    //* Edit childcomment
+    app.post('/post/:postid/comment/edit/:commentid/:childcommentid', upload.array('images', 3), (req: Request<{ postid: string, commentid: string, childcommentid: string }, {}, Post_EditComment_Req>, res: Response<ModifyPost_Res>) => {
+      console.log(`Edit child comment, ${req.params.postid} > ${req.params.commentid} > ${req.params.childcommentid}`)
+      if (!req.body || !req.body.password) {
+        res.sendStatus(400)
+        return
+      }
+      const commentID = new ObjectId(req.params.commentid)
+      const childCommentID = new ObjectId(req.params.childcommentid)
+
+      collections.post.findOneAndUpdate(
+        {
+          _id: new ObjectId(req.params.postid),
+          comments: {
+            $elemMatch: {
+              _id: commentID,
+              children: {
+                $elemMatch: {
+                  _id: childCommentID,
+                  password: req.body.password,
+                  deleted: false,
+                }
+              }
+            }
+          }
+        },
+        {
+          $set: {
+            "comments.$[comment].children.$[childcomment].content" : req.body.content,
+            "comments.$[comment].children.$[childcomment].images" : (req.files ? req.files as Express.Multer.File[] : []),
+          }
+        },
+        {
+          returnDocument: 'after',
+          arrayFilters: [
+            { "comment._id": commentID },
+            { "childcomment._id": childCommentID },
+          ]
+        }
+      ).then(upres => {
+        if (upres.ok && upres.value) {
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
+        }
+        else {
+          res.sendStatus(404)
+        }
+      })
+    })
+
+    // * Delete comment
+    app.delete('/post/:postid/comment/delete/:commentid', (req: Request<{ postid: string, commentid: string }, {}, { password: string }>, res: Response<ModifyPost_Res>) => {
+      console.log(`Delete comment, ${req.params.postid} > ${req.params.commentid}`)
+      if (!req.body || !req.body.password) {
+        res.sendStatus(400)
+        return
+      }
+      const commentID = new ObjectId(req.params.commentid)
+      collections.post.findOneAndUpdate(
+        {
+          _id: new ObjectId(req.params.postid),
+          comments: {
+            $elemMatch: {
+              _id: commentID,
+              password: req.body.password,
+              deleted: false,
+            }
+          }
+        },
+        {
+          $set: {
+            "comments.$[comment].deleted": true,
+          }
+        },
+        { returnDocument: 'after', arrayFilters: [{ 'comment._id': commentID }] }
+      ).then(upres => {
+        if (upres.ok && upres.value) {
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
+        }
+        else {
+          res.sendStatus(404)
+        }
+      })
+    })
+
+    //* Delete childcomment
+    app.delete('/post/:postid/comment/delete/:commentid/:childcommentid', (req: Request<{ postid: string, commentid: string, childcommentid: string }, {}, { password: string }>, res: Response<ModifyPost_Res>) => {
+      console.log(`Delete child comment, ${req.params.postid} > ${req.params.commentid} > ${req.params.childcommentid}`)
+      if (!req.body || !req.body.password) {
+        res.sendStatus(400)
+        return
+      }
+      const commentID = new ObjectId(req.params.commentid)
+      const childCommentID = new ObjectId(req.params.childcommentid)
+      collections.post.findOneAndUpdate(
+        {
+          _id: new ObjectId(req.params.postid),
+          comments: {
+            $elemMatch: {
+              _id: commentID,
+              children: {
+                $elemMatch: {
+                  _id: childCommentID,
+                  password: req.body.password,
+                  deleted: false,
+                }
+              }
+            }
+          }
+        },
+        {
+          $set: {
+            "comments.$[comment].children.$[childcomment].deleted": true,
+          }
+        },
+        {
+          returnDocument: 'after',
+          arrayFilters: [
+            { "comment._id": commentID },
+            { "childcomment._id": childCommentID },
+          ]
+        }
+      ).then(upres => {
+        if (upres.ok && upres.value) {
+          res.send({
+            success: true,
+            post: Post_to_ModifyPost_Res(upres.value)
+          }).status(200)
+        }
+        else {
+          res.sendStatus(404)
+        }
+      })
+    })
+
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`)
     })
